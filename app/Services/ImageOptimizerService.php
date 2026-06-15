@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\OptimizedImage;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class ImageOptimizerService
 {
@@ -13,7 +14,7 @@ class ImageOptimizerService
 
     public function __construct()
     {
-        $this->manager = new ImageManager('gd');
+        $this->manager = new ImageManager(new Driver());
         $this->config = config('image-optimizer');
     }
 
