@@ -3,7 +3,7 @@
 @section('title', 'PFAC Cameroun – Optimisur d\'Images')
 
 @section('content')
-<div x-data="imageOptimizer()" x-cloak>
+<div x-data="imageOptimizer()" x-cloak @csrf>
     <!-- Header Section -->
     <div class="text-center mb-8">
         <h2 class="text-3xl font-bold text-gray-800 mb-2">
@@ -16,8 +16,9 @@
 
     <!-- Dropzone -->
     <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
-        <form action="{{ url('/api/upload') }}" class="dropzone dropzone-custom" id="imageDropzone">
+        <form action="{{ url('/api/upload') }}" class="dropzone dropzone-custom" id="imageDropzone" enctype="multipart/form-data">
             @csrf
+            <input type="hidden" name="_token" value="{{ csrf_token() }}" autocomplete="off">
             <div class="dz-message text-center">
                 <div class="text-5xl mb-4">📁</div>
                 <h3 class="text-xl font-semibold text-gray-700 mb-2">
@@ -203,14 +204,21 @@ function imageOptimizer() {
 
         init() {
             const self = this;
+            const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
             const dropzone = new Dropzone('#imageDropzone', {
-                paramName: 'images',
+                url: '/api/upload',
+                paramName: 'images[]',
                 maxFilesize: 50,
                 maxFiles: 20,
                 acceptedFiles: '.jpeg,.jpg,.png,.gif,.webp,.bmp,.zip',
                 addRemoveLinks: false,
                 dictDefaultMessage: '',
+                uploadMultiple: true,
                 parallelUploads: 20,
+                maxFilesize: 50,
+                headers: {
+                    'X-CSRF-TOKEN': token,
+                },
                 init: function() {
                     this.on('success', function(file, response) {
                         if (response.success) {
