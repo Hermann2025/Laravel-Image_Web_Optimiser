@@ -53,7 +53,8 @@ class ImageOptimizerController extends Controller
 
     public function upload(ImageUploadRequest $request): JsonResponse
     {
-        $sessionId = Str::uuid()->toString();
+        // Réutiliser le sessionId existant envoyé par le frontend
+        $sessionId = $request->input('session_id', Str::uuid()->toString());
         $uploadedImages = [];
 
         // Récupérer le(s) fichier(s) - peut être un tableau ou un fichier unique

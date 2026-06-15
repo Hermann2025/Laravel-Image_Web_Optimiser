@@ -27,7 +27,7 @@
                     ou cliquez pour parcourir
                 </p>
                 <p class="text-sm text-gray-400">
-                    JPG, PNG, GIF, WebP, BMP • Max 20 fichiers • ZIP accepté • 50 Mo max/fichier
+                    JPG, PNG, GIF, WebP, BMP • Max 20 fichiers • ZIP accepté • 300 Mo max/fichier
                 </p>
             </div>
         </form>
@@ -46,6 +46,10 @@
                 <button @click="toggleAll()"
                         class="bg-gray-100 text-gray-600 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
                     <span x-text="allSelected() ? '🔓 Tout désélectionner' : '🔒 Tout sélectionner'"></span>
+                </button>
+                <button @click="resetAll()"
+                        class="bg-yellow-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-yellow-600 transition">
+                    🔄 Réinitialiser
                 </button>
                 <button @click="clearAll()"
                         class="btn-danger text-white px-4 py-2 rounded-lg text-sm font-medium">
@@ -225,15 +229,16 @@ function imageOptimizer() {
             format: 'webp',
             max_width: 1920,
         },
+        dropzoneInstance: null,
 
         init() {
             const self = this;
             const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-            const dropzone = new Dropzone('#imageDropzone', {
+            this.dropzoneInstance = new Dropzone('#imageDropzone', {
                 url: '/api/upload',
                 paramName: 'images',
-                maxFilesize: 50,
+                maxFilesize: 300,
                 maxFiles: 20,
                 acceptedFiles: '.jpeg,.jpg,.png,.gif,.webp,.bmp,.zip',
                 addRemoveLinks: false,
@@ -244,6 +249,17 @@ function imageOptimizer() {
                     'X-CSRF-TOKEN': token,
                 },
                 init: function() {
+                    this.on('sendingmultiple', function(files, xhr, formData) {
+                        // Envoyer le sessionId existant pour tout regrouper
+                        if (self.sessionId) {
+                            formData.append('session_id', self.sessionId);
+                        }
+                    });
+                    this.on('sending', function(file, xhr, formData) {
+                        if (self.sessionId) {
+                            formData.append('session_id', self.sessionId);
+                        }
+                    });
                     this.on('successmultiple', function(files, response) {
                         if (response.success) {
                             self.sessionId = response.session_id;
@@ -311,7 +327,6 @@ function imageOptimizer() {
             })
             .catch(err => {
                 console.error(err);
-                // Supprimer quand même en local si API erreur
                 this.images.splice(index, 1);
             });
         },
@@ -331,6 +346,33 @@ function imageOptimizer() {
             this.images = [];
             this.results = [];
             this.sessionId = null;
+            if (this.dropzoneInstance) {
+                this.dropzoneInstance.removeAllFiles(true);
+            }
+        },
+
+        resetAll() {
+            if (!confirm('Réinitialiser complètement ? Toutes les images et résultats seront perdus.')) return;
+
+            if (this.sessionId) {
+                fetch('/api/session/' + this.sessionId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+                    }
+                }).catch(() => {});
+            }
+            this.images = [];
+            this.results = [];
+            this.sessionId = null;
+            this.options = {
+                quality: 80,
+                format: 'webp',
+                max_width: 1920,
+            };
+            if (this.dropzoneInstance) {
+                this.dropzoneInstance.removeAllFiles(true);
+            }
         },
 
         optimize() {
@@ -356,7 +398,6 @@ function imageOptimizer() {
             .then(data => {
                 if (data.success) {
                     this.results = data.results;
-                    // Enlever les images sélectionnées (elles sont traitées)
                     selected.forEach(img => {
                         const idx = this.images.indexOf(img);
                         if (idx !== -1) this.images.splice(idx, 1);

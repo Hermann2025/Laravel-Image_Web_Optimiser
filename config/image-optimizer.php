@@ -33,7 +33,7 @@ return [
 
     'limits' => [
         'max_files' => 20,
-        'max_file_size' => 50,
+        'max_file_size' => 300,
         'allowed_types' => ['jpeg', 'png', 'gif', 'webp', 'bmp'],
     ],
 ];
