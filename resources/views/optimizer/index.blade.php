@@ -168,10 +168,16 @@
          class="bg-white rounded-2xl shadow-lg p-6 mb-8">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-semibold text-gray-800">📊 Résultats</h3>
-            <button @click="downloadAll()"
-                    class="btn-primary text-white px-5 py-2 rounded-lg text-sm font-medium">
-                📦 Tout télécharger (ZIP)
-            </button>
+            <div class="flex gap-2">
+                <button @click="downloadAll()"
+                        class="btn-primary text-white px-5 py-2 rounded-lg text-sm font-medium">
+                    📦 Tout télécharger (ZIP)
+                </button>
+                <button @click="newProject()"
+                        class="bg-green-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                    🆕 Nouveau projet
+                </button>
+            </div>
         </div>
 
         <div class="space-y-4">
@@ -349,6 +355,11 @@ function imageOptimizer() {
             if (this.dropzoneInstance) {
                 this.dropzoneInstance.removeAllFiles(true);
             }
+        },
+
+        newProject() {
+            if (!confirm('Passer à un nouveau projet ? Téléchargez d\'abord vos résultats si vous ne l\'avez pas fait.')) return;
+            this.resetAll();
         },
 
         resetAll() {
