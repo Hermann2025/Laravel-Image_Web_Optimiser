@@ -6,7 +6,6 @@ use App\Models\OptimizedImage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
-use Intervention\Image\Drivers\Gd\Driver;
 
 class ImageOptimizerService
 {
@@ -16,7 +15,7 @@ class ImageOptimizerService
     public function __construct()
     {
         // Use GD driver (compatible sans extension imagick)
-        $this->manager = new ImageManager(new Driver());
+        $this->manager = ImageManager::gd();
         $this->config = config('image-optimizer');
     }
 
@@ -36,7 +35,7 @@ class ImageOptimizerService
         $optimizedPath = 'temp/images/optimized/' . $image->session_id . '/' . $optimizedFileName;
 
         try {
-            $img = $this->manager->read($originalPath);
+            $img = $this->manager->decodePath($originalPath);
 
             // Redimensionner si nécessaire
             if ($maxWidth && $img->width() > $maxWidth) {
