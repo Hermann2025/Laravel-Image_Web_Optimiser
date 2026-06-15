@@ -56,7 +56,15 @@ class ImageOptimizerController extends Controller
         $sessionId = Str::uuid()->toString();
         $uploadedImages = [];
 
-        foreach ($request->file('images') as $file) {
+        // Récupérer le(s) fichier(s) - peut être un tableau ou un fichier unique
+        $files = $request->file('images');
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        foreach ($files as $file) {
+            if (!$file) continue;
+
             $extension = strtolower($file->getClientOriginalExtension());
 
             if ($extension === 'zip') {

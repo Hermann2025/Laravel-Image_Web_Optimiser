@@ -13,6 +13,22 @@ class ImageUploadRequest extends FormRequest
 
     public function rules(): array
     {
+        // Si c'est un tableau de fichiers (uploadMultiple)
+        if ($this->hasFile('images') && is_array($this->file('images'))) {
+            return [
+                'images' => 'required|array|max:20',
+                'images.*' => 'required|file|mimes:jpeg,png,gif,webp,bmp,zip|max:51200',
+            ];
+        }
+
+        // Si c'est un fichier unique (Dropzone sans uploadMultiple ou fichier unique)
+        if ($this->hasFile('images')) {
+            return [
+                'images' => 'required|file|mimes:jpeg,png,gif,webp,bmp,zip|max:51200',
+            ];
+        }
+
+        // Fallback : tableau avec clés fichiers
         return [
             'images' => 'required|array|max:20',
             'images.*' => 'required|file|mimes:jpeg,png,gif,webp,bmp,zip|max:51200',
