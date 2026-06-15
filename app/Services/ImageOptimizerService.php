@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\OptimizedImage;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Intervention\Image\ImageManager;
 
@@ -14,8 +13,7 @@ class ImageOptimizerService
 
     public function __construct()
     {
-        // Use GD driver (compatible sans extension imagick)
-        $this->manager = ImageManager::gd();
+        $this->manager = new ImageManager('gd');
         $this->config = config('image-optimizer');
     }
 
@@ -48,16 +46,10 @@ class ImageOptimizerService
                 $variants = $this->generateThumbnails($img, $image);
             }
 
-            // Convertir et optimiser
-            $encoded = match ($format) {
-                'webp' => $img->toWebp($quality),
-                'avif' => $img->toAvif($quality),
-                'png' => $img->toPng(),
-                'gif' => $img->toGif(),
-                default => $img->toJpeg($quality),
-            };
+            // Convertir et encoder selon le format choisi
+            $encoded = $img->encodeUsingFileExtension($extension, quality: $quality);
 
-            Storage::disk('public')->put($optimizedPath, $encoded);
+            Storage::disk('public')->put($optimizedPath, (string) $encoded);
 
             $optimizedSize = Storage::disk('public')->size($optimizedPath);
             $originalSize = Storage::disk('public')->size($image->path_original);
@@ -94,7 +86,8 @@ class ImageOptimizerService
             $thumb = clone $img;
             $thumb->cover($width, $height);
             $thumbPath = "temp/images/thumbnails/{$sessionId}/{$originalName}_{$name}.webp";
-            Storage::disk('public')->put($thumbPath, $thumb->toWebp(70));
+            $encoded = $thumb->encodeUsingFileExtension('webp', quality: 70);
+            Storage::disk('public')->put($thumbPath, (string) $encoded);
             $variants[$name] = $thumbPath;
         }
 
@@ -116,7 +109,6 @@ class ImageOptimizerService
             }
         }
 
-        // Nettoyer les dossiers vides
         $this->cleanupEmptyDirectories($image->session_id);
     }
 
