@@ -246,7 +246,12 @@ function imageOptimizer() {
             if (!confirm('Supprimer toutes les images ?')) return;
 
             if (this.sessionId) {
-                fetch('{{ url('/api/session') }}/' + this.sessionId, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }'} } });
+                fetch('{{ url('/api/session') }}/' + this.sessionId, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                });
             }
             this.images = [];
             this.results = [];
